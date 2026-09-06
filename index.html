@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MedAssist</title>
+<style>
+body{
+font-family:Arial;
+background:#f4f6f9;
+margin:0;
+}
+
+.header{
+background:#2196f3;
+color:white;
+padding:20px;
+text-align:center;
+z-index:999;
+position:relative;
+z-index:1000;
+}
+
+.card{
+background:white;
+margin:20px;
+padding:20px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+input,select{
+width:100%;
+padding:10px;
+box-sizing:border-box;
+}
+
+button{
+background:#2196f3;
+color:white;
+border:none;
+padding:10px 20px;
+cursor:pointer;
+border-radius:5px;
+}
+.sidebar{
+height:100%;
+width:0;
+position:fixed;
+top:0;
+left:0;
+background:#fcf9f9;
+overflow-x:hidden;
+transition:0.4s;
+padding-top:120px;
+}
+
+.sidebar a{
+padding:10px 20px;
+text-decoration:none;
+font-size:20px;
+color:rgb(17, 17, 17);
+display:block;
+}
+
+.sidebar a:hover{
+background:#333;
+}
+table{
+width:100%;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:12px;
+text-align:center;
+}
+
+th{
+background:#2196f3;
+color:white;
+}
+</style>
+</head>
+
+<body>
+<div id="sidebar" class="sidebar">
+
+<a href="#">Dashboard</a>
+<a href="#">Orders</a>
+<a href="#">Billing</a>
+<a href="#" onclick="showInventory()">📦Inventory</a>
+
+</div>
+
+<div class="header">
+<span onclick="toggleInventory()" style="font-size:30px;cursor:pointer;position:absolute;left:20px;top:20px;">
+☰
+</span>
+<h1>MedAssist Pharmacy Software</h1>
+</div>
+
+<div class="card">
+<h2 id="totalMedicines">Total Medicines: 0</h2>
+</div>
+
+<div class="card">
+<h2 id="lowStockCount">Low Stock: 0</h2>
+</div>
+
+<div class="card">
+<h2 id="salesToday">Sales Today: ₹0</h2>
+</div>
+
+<div class="header">
+<h1>MedAssist Pharmacy Software</h1>
+</div>
+
+<div class="card">
+<h2>Add Medicine</h2>
+<form id="medicineForm">
+
+<label>Medicine Name</label><br>
+<input id="medicineName" type="text" placeholder="Paracetamol"><br><br>
+
+<label>Batch Number</label><br>
+<input id="batchNumber" type="text"><br><br>
+
+<label>Expiry Date</label><br>
+<input id="expiryDate" type="date"><br><br>
+
+<label>Quantity</label><br>
+<input id="quantity" type="number"><br><br>
+
+<label>Unit Type</label><br>
+<select id="unitType">
+<option>Tablet</option>
+<option>Strip</option>
+<option>Bottle</option>
+<option>Tube</option>
+<option>Injection</option>
+</select><br><br>
+
+<label>Sale Unit</label><br>
+<select id="saleUnit">
+<option>Tablet</option>
+<option>Capsule</option>
+<option>ml</option>
+<option>Gram</option>
+<option>Injection</option>
+</select><br><br>
+
+<label>Conversion Factor</label><br>
+<input id="conversionFactor" type="number" placeholder="15"><br><br>
+
+<label>Selling Price</label><br>
+<input id="sellingPrice" type="number"><br><br>
+
+<button type="submit">Add Medicine</button>
+</form>
+<hr>
+
+<h2>Create Bill</h2>
+
+<label>Customer Name</label><br>
+<input id="customerName" type="text"><br><br>
+
+<label>Medicine</label><br>
+<select id="billMedicine">
+</select><br><br>
+<label>batch</label><br>
+<select id="billBatch">
+</select><br><br>
+
+<label>Quantity</label><br>
+<input id="billQty" type="number"><br><br>
+
+<button id="createBillBtn" type="button">
+Create Bill
+</button>
+
+<h3 id="billTotal"></h3>
+<div id="billOutput"></div>
+<h2>Bill History</h2>
+
+<table border="1" width="100%" id="billHistoryTable">
+<tr>
+<th>Bill No</th>
+<th>Customer</th>
+<th>Medicine</th>
+<th>Qty</th>
+<th>Total</th>
+<th>Date</th>
+</tr>
+</table>
+<h2>Medicine List</h2>
+<input id="searchBox" type="text" placeholder="Search Medicine">
+<h2>Pending Orders</h2>
+<h2 style="text-align:center;">Pending Order</h2>"
+<table border="1" width="100%" id="ordersTable">
+<tr>
+<th>Order ID</th>
+<th>Patient</th>
+<th>Medicine</th>
+<th>Qty</th>
+<th>Status</th>
+<th>Action</th>
+</tr>
+</table>
+<br>
+<div id="inventorySection"style="display:none;">
+<h2>Medicine Inventory</h2>
+<h3 id="stockAlert"></h3>
+<h3 id="expiryAlert"></h3>
+
+<table border ="1" width="100%" id="medicineTable">
+<tr>
+<th>Medicine</th>
+<th>Batch</th>
+<th>Expiry</th>
+<th>Qty</th>
+<th>Unit</th>
+<th>Price</th>
+<th>Action</th>
+</tr>
+</table>
+
+</div>
+<script>
+console.log("SCRIPT STARTED");
+const form = document.getElementById("medicineForm");
+const table = document.getElementById("medicineTable");
+const ordersTable =
+document.getElementById("ordersTable");
+const customerName =
+document.getElementById("customerName");
+
+const billMedicine =
+document.getElementById("billMedicine");
+
+const billQty =
+document.getElementById("billQty");
+
+ordersTable.insertAdjacentHTML("beforeend", `
+<tr>
+<td>1001</td>
+<td>Om</td>
+<td>Paracetamol</td>
+<td>2</td>
+<td>Pending</td>
+<td>
+<button onclick="acceptOrder(this)">Accept</button>
+<button onclick="rejectOrder(this)">Reject</button>
+</td>
+</tr>
+
+<tr>
+<td>1002</td>
+<td>Rahul</td>
+<td>Dolo 650</td>
+<td>1</td>
+<td>Pending</td>
+<td>
+<button onclick="acceptOrder(this)">Accept</button>
+<button onclick="rejectOrder(this)">Reject</button>
+</td>
+</tr>
+`);
+
+let medicines = JSON.parse(localStorage.getItem("medicines")) || [];
+
+let salesToday=Number(localStorage.getItem("salesToday"))|| 0;
+let billNo=Number(localStorage.getItem("billNo"))|| 1000;
+medicines.forEach(function(med){
+
+const row = table.insertRow();
+
+row.insertCell(0).innerHTML = med.name;
+row.insertCell(1).innerHTML = med.batch;
+row.insertCell(2).innerHTML = med.expiry;
+row.insertCell(3).innerHTML = med.qty;
+row.insertCell(4).innerHTML = med.unit || "";
+row.insertCell(5).innerHTML = "₹" + med.price;
+
+row.insertCell(6).innerHTML =
+'<button onclick="deleteMedicine(this)">Delete</button>';
+});
+function loadMedicineDropdown(){
+
+const dropdown =
+document.getElementById("billMedicine");
+
+dropdown.innerHTML = "";
+
+medicines.forEach(function(med){
+
+dropdown.innerHTML +=
+`<option value="${med.name}">
+${med.name}
+</option>`;
+
+});
+
+}
+loadMedicineDropdown();
+loadBatchDropdown();
+updateDashboard();
+document.getElementById("billMedicine")
+.addEventListener("change", function(){
+
+loadBatchDropdown();
+
+});
+function loadBatchDropdown(){
+
+const medicine =
+document.getElementById("billMedicine").value;
+
+const batchDropdown =
+document.getElementById("billBatch");
+
+batchDropdown.innerHTML = "";
+
+medicines.forEach(function(med){
+
+if(med.name === medicine){
+
+batchDropdown.innerHTML +=
+`<option value="${med.batch}">
+${med.batch}
+</option>`;
+
+}
+});
+}
+function updateDashboard(){
+
+document.getElementById("totalMedicines").innerHTML =
+"Total Medicines: " + medicines.length;
+
+let lowStock = 0;
+
+medicines.forEach(function(med){
+
+if(Number(med.qty) < 10){
+lowStock++;
+}
+
+});
+
+document.getElementById("lowStockCount").innerHTML =
+"Low Stock: " + lowStock;
+document.getElementById("salesToday").innerHTML="salesToday: ₹" + salesToday;
+}
+
+
+const stockAlert = document.getElementById("stockAlert");
+const expiryAlert = document.getElementById("expiryAlert");
+form.addEventListener("submit", function(e){
+
+e.preventDefault();
+
+const name = document.getElementById("medicineName").value;
+const batch = document.getElementById("batchNumber").value;
+const expiry = document.getElementById("expiryDate").value;
+const today = new Date();
+const expDate = new Date(expiry);
+
+const diffDays =
+(expDate - today) / (1000 * 60 * 60 * 24);
+
+if(diffDays < 30){
+
+expiryAlert.innerHTML =
+"⚠ Expiry Alert : " + name;
+
+}
+const qty = document.getElementById("quantity").value;
+console.log("QTY=",qty);
+if(Number(qty) < 10){
+stockAlert.innerHTML =
+"⚠ Low Stock Alert : " + name;
+}else{
+    stockAlert.innerHTML="";
+
+}
+const unit = document.getElementById("unitType").value;
+const price = document.getElementById("sellingPrice").value;
+const saleUnit = document.getElementById("saleUnit").value;
+const conversionFactor = Number(document.getElementById("conversionFactor").value);
+
+if(name===""){
+alert("Enter medicine name");
+return;
+}
+
+const row = table.insertRow();
+
+row.insertCell(0).innerHTML = name;
+row.insertCell(1).innerHTML = batch;
+row.insertCell(2).innerHTML = expiry;
+row.insertCell(3).innerHTML = qty;
+row.insertCell(4).innerHTML = unit;
+row.insertCell(5).innerHTML = "₹" + price;
+
+row.insertCell(6).innerHTML='<button onclick="deleteMedicine(this)">Delete</button>';
+medicines.push({
+name,
+batch,
+expiry,
+qty,
+unit,
+saleUnit,
+conversionFactor,
+price
+});
+
+loadMedicineDropdown();
+loadBatchDropdown();
+updateDashboard();
+
+localStorage.setItem(
+"medicines",
+JSON.stringify(medicines)
+);
+form.reset();
+stockAlert.innerHTML="";
+expiryAlert.innerHTML="";
+
+});
+
+document.getElementById("searchBox").addEventListener("keyup", function(){
+
+let filter = this.value.toLowerCase();
+
+let rows = document.querySelectorAll("#medicineTable tr");
+
+rows.forEach((row,index)=>{
+
+if(index===0) return;
+
+let text = row.textContent.toLowerCase();
+
+row.style.display =
+text.includes(filter) ? "" : "none";
+
+});
+
+});
+function editMedicine(btn){
+
+const row = btn.closest("tr");
+
+document.getElementById("medicineName").value = row.cells[0].innerText;
+document.getElementById("batchNumber").value = row.cells[1].innerText;
+document.getElementById("expiryDate").value = row.cells[2].innerText;
+document.getElementById("quantity").value = row.cells[3].innerText;
+document.getElementById("sellingPrice").value = row.cells[4].innerText.replace("₹","");
+
+row.remove();
+
+}
+function deleteMedicine(btn){
+
+const row = btn.closest("tr");
+
+const medicineName =
+row.cells[0].innerText;
+
+medicines = medicines.filter(function(m){
+
+return m.name !== medicineName;
+
+});
+
+localStorage.setItem(
+"medicines",
+JSON.stringify(medicines)
+);
+
+row.remove();
+loadMedicineDropdown();
+loadBatchDropdown();
+updateDashboard();
+
+}
+function toggleInventory(){
+
+const sidebar =
+document.getElementById("sidebar");
+
+if(sidebar.style.width === "250px"){
+
+sidebar.style.width = "0";
+
+}else{
+
+sidebar.style.width = "250px";
+
+}
+
+}
+function showInventory(){
+
+document.getElementById("inventorySection").style.display = "block";
+
+document.getElementById("sidebar").style.width = "0";
+
+}
+function acceptOrder(btn){
+
+const row = btn.closest("tr");
+
+row.cells[4].innerHTML = "Accepted";
+
+customerName.value =
+row.cells[1].innerText;
+
+billMedicine.value= 
+row.cells[2].innerText;
+
+loadBatchDropdown();
+
+billQty.value =
+row.cells[3].innerText;
+
+}
+
+function rejectOrder(btn){
+
+const row = btn.closest("tr");
+
+row.cells[4].innerHTML = "Rejected";
+
+}
+document.getElementById("createBillBtn")
+.addEventListener("click", function(){
+
+const customer =
+document.getElementById("customerName").value;
+
+const medicine =
+document.getElementById("billMedicine").value;
+
+const batch =
+document.getElementById("billBatch").value;
+
+const qty =
+Number(document.getElementById("billQty").value);
+alert("Medicine="+medicine+"\nBatch="+batch);
+console.log(medicines);
+const med =
+medicines.find(function(m){
+
+return String(m.name).trim() === String(medicine).trim() &&
+       String(m.batch).trim() === String(batch).trim();
+
+});
+
+if(!med){
+alert("Medicine not found");
+return;
+}
+
+if(qty > Number(med.qty)){
+alert("Not enough stock");
+return;
+}
+
+billNo++;
+localStorage.setItem("billNo",billNo);
+
+const total = qty * Number(med.price);
+salesToday += total;
+localStorage.setItem("salesToday",salesToday);
+
+updateDashboard();
+
+med.qty = Number(med.qty) - qty;
+
+localStorage.setItem(
+"medicines",
+JSON.stringify(medicines)
+);
+
+let rows =
+document.querySelectorAll("#medicineTable tr");
+
+rows.forEach((row,index)=>{
+
+if(index===0) return;
+
+if(row.cells[0].innerText === medicine){
+row.cells[3].innerHTML = med.qty;
+}
+
+});
+
+document.getElementById("billTotal").innerHTML =
+"Total Amount: ₹" + total;
+
+document.getElementById("billOutput").innerHTML =
+`
+<hr>
+<h3>MEDASSIST BILL</h3>
+<p><b>Bill No:</b> ${billNo}</p>
+<p><b>Date:</b> ${new Date().toLocaleString()}</p>
+<p><b>Customer:</b> ${customer}</p>
+<p><b>Medicine:</b> ${medicine}</p>
+<p><b>Quantity:</b> ${qty}</p>
+<p><b>Rate:</b> ₹${med.price}</p>
+<h2>Total: ₹${total}</h2>
+<hr>
+`;
+
+});
+</script>
+</body>
