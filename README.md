@@ -1,3 +1,40 @@
+# MedAssist Pharma
+
+Advanced Pharmacy Management System
+
+## Features
+
+- Medicine Management
+- Batch & Stock Management
+- Supplier Management
+- Customer Management
+- Sales & POS
+- Invoice Generation
+- Analytics & Reports
+- Expiry Tracking
+- User Management
+
+## Current Status
+
+Version: 1.0
+
+## Planned Features
+
+- Prescription Upload
+- Family Accounts
+- Medicine Refill Reminders
+- WhatsApp Invoice Sharing
+- Drug Overuse Warning
+- AI Pharmacy Assistant
+
+## Developer
+
+Om Pohekar
+
+## Development Branch
+
+medassist-dev
+
 # DRXStore v2.0.0 — Complete Pharmacy Management System
 **Developed by Vineet | psvineet@zohomail.in**
 
